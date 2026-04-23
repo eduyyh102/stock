@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ko" data-font-size="1">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주식 고수들의 멘탈 관리 갤러리</title>
+    <style>
+        /* 기본 디자인 테마 */
+        :root {
+            --bg-color: #f4f4f2;
+            --text-color: #333333;
+            --primary-color: #2c4c3b; /* 딥 그린 */
+            --secondary-color: #1a2a3a; /* 네이비 */
+            --accent-color: #d4a373; /* 응원 버튼 포인트 */
+            --naver-color: #03c75a; /* 네이버 그린 */
+            --panel-bg: #ffffff;
+            --btn-bg: #e0e0e0;
+            --btn-text: #333;
+            --modal-overlay: rgba(0, 0, 0, 0.6);
+            --modal-bg: #ffffff;
+        }
+
+        /* 고대비 모드 */
+        body.high-contrast {
+            --bg-color: #000000;
+            --text-color: #ffff00;
+            --primary-color: #000000;
+            --secondary-color: #ffff00;
+            --accent-color: #ffff00;
+            --naver-color: #ffff00;
+            --panel-bg: #000000;
+            --btn-bg: #ffff00;
+            --btn-text: #000000;
+            --modal-bg: #000000;
+            --modal-overlay: rgba(255, 255, 255, 0.2);
+        }
+
+        html[data-font-size="1"] { font-size: 16px; }
+        html[data-font-size="2"] { font-size: 20px; }
+        html[data-font-size="3"] { font-size: 24px; }
+
+        body {
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            transition: all 0.3s ease;
+        }
+
+        /* 상단 네이버 증권 링크 바 */
+        .top-bar {
+            background-color: var(--panel-bg);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: flex-end;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        body.high-contrast .top-bar { border-bottom: 2px solid var(--text-color); }
+
+        .naver-link {
+            background-color: var(--naver-color);
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: opacity 0.2s;
+        }
+
+        body.high-contrast .naver-link {
+            background-color: transparent;
+            color: var(--naver-color);
+            border: 2px solid var(--naver-color);
+        }
+
+        .naver-link:hover { opacity: 0.8; }
+
+        /* 전체 레이아웃 (좌측 메시지, 중앙 갤러리) */
+        .layout-wrapper {
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            gap: 2rem;
+            margin-right: 80px; /* 우측 UDL 패널 공간 */
+            min-height: calc(100vh - 60px);
+        }
+
+        /* 좌측 응원 메시지 보드 */
+        .message-board {
+            width: 300px;
+            background-color: var(--panel-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            height: fit-content;
+            position: sticky;
+            top: 80px;
+        }
+
+        body.high-contrast .message-board { border: 2px solid var(--text-color); }
+
+        .message-board h2 {
+            font-size: 1.2rem;
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--btn-bg);
+            padding-bottom: 10px;
+        }
+
+        body.high-contrast .message-board h2 { color: var(--text-color); border-color: var(--text-color); }
+
+        .msg-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 15px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .msg-item {
+            background-color: var(--bg-color);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        body.high-contrast .msg-item { border: 1px solid var(--text-color); }
+
+        .msg-input-area { display: flex; flex-direction: column; gap: 10px; }
+        
+        .msg-input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .msg-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        body.high-contrast .msg-btn {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 2px solid var(--text-color);
+        }
+
+        /* 중앙 메인 콘텐츠 */
+        main { flex: 1; }
+
+        header { text-align: center; margin-bottom: 2rem; }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background-color: var(--panel-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        body.high-contrast .card { border-color: var(--text-color); }
+
+        .card:hover, .card:focus {
+            transform: translateY(-10px);
+            outline: 4px solid var(--primary-color);
+        }
+
+        .card img { width: 100%; height: 350px; object-fit: cover; display: block; }
+        
+        .card-body {
+            padding: 1.5rem;
+            text-align: center;
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.05));
+        }
+
+        /* 하단 응원 섹션 */
+        .cheer-section {
+            text-align: center; margin-top: 4rem; padding: 3rem;
+            background-color: var(--panel-bg); border-radius: 20px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+        }
+
+        body.high-contrast .cheer-section { border: 2px solid var(--text-color); }
+
+        .cheer-text { font-size: 1.8rem; font-weight: 800; color: var(--primary-color); margin-bottom: 1.5rem; }
+        body.high-contrast .cheer-text { color: var(--text-color); }
+
+        .cheer-btn {
+            background-color: var(--accent-color); color: white;
+            border: none; padding: 1.5rem 3rem; font-size: 1.5rem; font-weight: bold;
+            border-radius: 50px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        body.high-contrast .cheer-btn {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 3px solid var(--text-color);
+        }
+
+        .cheer-btn:active { transform: scale(0.95); }
+        .counter-display { margin-top: 1rem; font-size: 1.2rem; font-weight: bold; }
+
+        /* UDL 패널 */
+        .udl-panel {
+            position: fixed; right: 0; top: 0; height: 100vh; width: 80px;
+            background-color: var(--panel-bg); box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; align-items: center; padding-top: 5rem; gap: 1.5rem; z-index: 100;
+        }
+        body.high-contrast .udl-panel { border-left: 2px solid var(--text-color); }
+
+        .udl-btn {
+            background-color: var(--btn-bg); color: var(--btn-text);
+            border: none; border-radius: 50%; width: 55px; height: 55px;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* 모달 디자인 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--modal-overlay); display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: 0.3s; z-index: 200;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: var(--modal-bg); padding: 3rem; border-radius: 20px;
+            max-width: 600px; width: 90%; text-align: center; transform: translateY(20px); transition: 0.3s;
+        }
+        body.high-contrast .modal-content { border: 2px solid var(--text-color); }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+
+        /* 반응형 (모바일) */
+        @media (max-width: 992px) {
+            .layout-wrapper { flex-direction: column; margin-right: 0; padding-bottom: 100px; }
+            .message-board { width: 100%; position: static; }
+            .udl-panel {
+                top: auto; bottom: 0; height: 80px; width: 100%;
+                flex-direction: row; justify-content: center; padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <a href="https://finance.naver.com" target="_blank" rel="noopener noreferrer" class="naver-link" aria-label="새 창에서 네이버 증권 열기">
+            📈 네이버 증권 바로가기
+        </a>
+    </div>
+
+    <div class="layout-wrapper">
+        <aside class="message-board" aria-labelledby="board-title">
+            <h2 id="board-title">💬 투자자 응원 한마디</h2>
+            <ul class="msg-list" id="msg-list" aria-live="polite">
+                <li class="msg-item">다들 힘냅시다! 존버는 승리합니다. 🚀</li>
+                <li class="msg-item">폭락장엔 대가들의 명언이 최고네요.</li>
+            </ul>
+            <div class="msg-input-area">
+                <textarea class="msg-input" id="msg-input" rows="3" placeholder="서로에게 힘이 되는 응원 메시지를 남겨주세요!" aria-label="응원 메시지 입력란"></textarea>
+                <button class="msg-btn" id="btn-submit-msg">응원 남기기</button>
+            </div>
+        </aside>
+
+        <main>
+            <header>
+                <h1 style="font-size: 2.5rem; margin-bottom: 10px;">📉 멘탈 관리 갤러리 📈</h1>
+                <p>대가들의 사진을 클릭해 위로와 지혜를 얻으세요.</p>
+            </header>
+
+            <div class="gallery" id="gallery-container"></div>
+
+            <section class="cheer-section">
+                <div class="cheer-text">"우리 모두 흔들리지 말자!"</div>
+                <button class="cheer-btn" id="btn-cheer" aria-label="영차 영차 응원하기">🙌 영차 영차!</button>
+                <div class="counter-display" aria-live="polite">
+                    오늘의 응원 횟수: <span id="cheer-count" style="color: #e63946;">0</span>회
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <aside class="udl-panel" role="region" aria-label="접근성 제어">
+        <button class="udl-btn" id="btn-contrast" title="고대비">🌓</button>
+        <button class="udl-btn" id="btn-fontsize" title="글자 크기">A+</button>
+    </aside>
+
+    <div class="modal-overlay" id="modal" role="dialog" aria-modal="true">
+        <div class="modal-content" aria-live="polite">
+            <button style="position:absolute; top:20px; right:20px; border:none; background:none; font-size:2rem; cursor:pointer; color: var(--text-color);" id="btn-close">×</button>
+            <div id="modal-quote" class="quote-text" style="font-size: 1.6rem; font-weight: 700; margin-bottom: 20px;"></div>
+            <div id="modal-author" style="font-size: 1.2rem; opacity: 0.8;"></div>
+            <button style="margin-top: 30px; padding: 10px 20px; cursor: pointer; background:var(--primary-color); color:white; border:none; border-radius:5px;" id="btn-tts">🔊 음성으로 듣기</button>
+        </div>
+    </div>
+
+    <script>
+        // 1. 갤러리 데이터 및 렌더링
+        const mastersData = [
+            { name: "워런 버핏", img: "picture/워런버핏.jpg", quote: "주식 시장은 인내심 없는 사람의 돈이 인내심 있는 사람에게 이동하는 곳이다." },
+            { name: "피터 린치", img: "picture/피터린치.jpg", quote: "하락장에서 당신이 할 수 있는 최선의 일은 주식을 파는 것이 아니라 더 사는 것이다." },
+            { name: "앙드레 코스톨라니", img: "picture/앙드레코스톨라니.jpg", quote: "투자자는 깊게 생각하고 인내심을 가져야 한다. 소나기가 올 때는 잠시 우산을 써라." }
+        ];
+
+        const galleryContainer = document.getElementById('gallery-container');
+        const modal = document.getElementById('modal');
+        let currentQuote = "";
+
+        mastersData.forEach(master => {
+            const card = document.createElement('article');
+            card.className = 'card';
+            card.tabIndex = 0;
+            card.innerHTML = `
+                <img src="${master.img}" alt="${master.name}의 사진" onerror="this.src='https://via.placeholder.com/400x500?text=Image+Not+Found'">
+                <div class="card-body"><h2>${master.name}</h2></div>
+            `;
+            const openModal = () => {
+                currentQuote = master.quote;
+                document.getElementById('modal-quote').textContent = `"${master.quote}"`;
+                document.getElementById('modal-author').textContent = `- ${master.name} -`;
+                modal.classList.add('active');
+            };
+            card.onclick = openModal;
+            card.onkeypress = (e) => { if(e.key === 'Enter') openModal(); };
+            galleryContainer.appendChild(card);
+        });
+
+        // 모달 닫기 및 음성
+        document.getElementById('btn-close').onclick = () => modal.classList.remove('active');
+        document.getElementById('btn-tts').onclick = () => {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(currentQuote);
+            utter.lang = 'ko-KR';
+            window.speechSynthesis.speak(utter);
+        };
+
+        // 2. 메시지 보드 기능
+        const msgInput = document.getElementById('msg-input');
+        const btnSubmitMsg = document.getElementById('btn-submit-msg');
+        const msgList = document.getElementById('msg-list');
+
+        const addMessage = () => {
+            const text = msgInput.value.trim();
+            if (text) {
+                const li = document.createElement('li');
+                li.className = 'msg-item';
+                li.textContent = text;
+                msgList.appendChild(li);
+                msgInput.value = ''; // 입력창 초기화
+                msgList.scrollTop = msgList.scrollHeight; // 스크롤 맨 아래로 이동
+            }
+        };
+
+        btnSubmitMsg.onclick = addMessage;
+        msgInput.onkeypress = (e) => {
+            if(e.key === 'Enter' && !e.shiftKey) { // Shift+Enter는 줄바꿈 허용
+                e.preventDefault();
+                addMessage();
+            }
+        };
+
+        // 3. 영차영차 카운터
+        const cheerCountDisplay = document.getElementById('cheer-count');
+        let count = 0;
+        document.getElementById('btn-cheer').onclick = () => {
+            count++;
+            cheerCountDisplay.textContent = count;
+        };
+
+        // 4. UDL (고대비, 폰트 조절)
+        document.getElementById('btn-contrast').onclick = () => document.body.classList.toggle('high-contrast');
+        document.getElementById('btn-fontsize').onclick = () => {
+            let s = parseInt(document.documentElement.getAttribute('data-font-size'));
+            document.documentElement.setAttribute('data-font-size', s >= 3 ? 1 : s + 1);
+        };
+    </script>
+</body>
+</html>
